@@ -1,6 +1,6 @@
-# Dumper py
+# sfc-dumper-py
 - Dumper for sfc by Python
-- HAT for Raspberry Pi
+- This dumper is a HAT for Raspberry Pi and we also publish the source code to make it work in this repository.
 
 ## Environment
 - Raspberry pi 3 b+, or later (Recommend)
@@ -51,21 +51,18 @@ ICソケットはそれぞれ2個使います。バラで購入できるなら�
 
 
 ## 完成図
-- 全体像
-最低限の実装。オプションパーツの実装無しです。
-ラズパイと接続するとこのような見た目になります。
-２段のスタック構造になっています。
-※Raspberry Pi専用スペーサーのナットは使いませんでした。
-
+最低限の実装になります。
+- オプションパーツの実装無しです。
+- ラズパイと接続するとこのような見た目になります。
+- ２段のスタック構造になっています。
+- ※Raspberry Pi専用スペーサーのナットは使いませんでした。
 ![](doc/img/complete.png)
 
 ## 分割した様子
 - 表
-
 ![](doc/img/div-omote.png)
 
 - 裏
-
 ![](doc/img/div-ura.png)
 
 ## おまけ
