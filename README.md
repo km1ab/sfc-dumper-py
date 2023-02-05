@@ -1,5 +1,5 @@
 # sfc-dumper-py
-- Dumper for sfc by Python
+- Dumper for sfc by Python.
 - This dumper is a HAT for Raspberry Pi and we also publish the source code to make it work in this repository.
 
 ## Environment
@@ -9,9 +9,9 @@
 ## How to use
 After setting Raspberry pi (raspbian install),
 at Raspberry pi, or remote connecting (ex ssh,...)
-```
-pip install RPi.GPIO
-python3 sfc-dumper.py filename
+```sh
+$ pip install RPi.GPIO
+$ python3 sfc-dumper.py filename
 ```
 
 ## Hardware
@@ -60,9 +60,11 @@ ICソケットはそれぞれ2個使います。バラで購入できるなら�
 
 ## 分割した様子
 - 表
+- 各パーツの取付は回路図をご参照下さい。(doc/top-schematic.pdf)
 ![](doc/img/div-omote.png)
 
 - 裏
+- 各パーツの取付は回路図をご参照下さい。(doc/bottom-schematic.pdf)
 ![](doc/img/div-ura.png)
 
 ## おまけ
