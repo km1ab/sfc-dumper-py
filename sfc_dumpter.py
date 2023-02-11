@@ -243,11 +243,11 @@ def MainLoop():
         print("-------------------------")
         ClearAddr()
         TermPort()
+        dbg.dbg_print("")
+        dbg.dbg_print("OK Bokujo \(^o^)/")
         return
 
     ClearAddr()
-    dbg.dbg_print("")
-    dbg.dbg_print("OK Bokujo")
 
     start_address: int = 0x0000
     if isLoRom:
