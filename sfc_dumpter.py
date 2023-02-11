@@ -11,12 +11,13 @@ port_tbl_data_ctrl = [20, 21, 22, 23, 4, 5, 6, 7]
 # CPU R/W	# /ROMSEL	# M2	# PPU /RD
 port_tbl_port_ctrl = [9, 10, 11, 19]
 
-debug_log = False
-
-
-def dbg_print(log_msg):
-    if debug_log:
-        print(log_msg)
+class Debug:
+    def __init__(self,fdebug:bool):
+        self.f_debug_log:bool = fdebug
+        
+    def dbg_print(self, log_msg):
+        if self.f_debug_log:
+            print(log_msg)
 
 
 def InitPort():
@@ -55,7 +56,7 @@ def GpioGetData():
     return ret
 
 
-# 	dbg_print(ret)
+# 	dbg.dbg_print(ret)
 # 	return ord(hex(ret))
 
 
@@ -126,12 +127,12 @@ def ReadRom(addr, chrsize) -> list:
     time.sleep(INTV)
     output = []
     for i in range(chrsize):
-        # dbg_print(chr(GpioGetData()), end='')
+        # dbg.dbg_print(chr(GpioGetData()), end='')
         time.sleep(INTV)
         # GpioGetData()
         output.append(GpioGetData())
         IncAddress()
-    dbg_print("")
+    print("")
     return output
 
 
@@ -178,7 +179,9 @@ def MainLoop():
     opt = get_option()
     path_w = opt["filename"]
     game_info_f = opt["gameinfo"]
-
+    f_debug_log = opt["debug"]
+    dbg = Debug(f_debug_log)
+    
     InitPort()
     startAddr = 0xFFC0  # ROM Info Addr
     RomInfoSize = ROM_INFO_SIZE
@@ -193,58 +196,64 @@ def MainLoop():
     DisableRomSel()
     EnableM2_PpuWr()
     EnablePpuRd()
-    # out = ReadRom(startAddr, RomInfoSize)
-    out: list = ReadRom(startAddr, RomInfoSize)
+    header_info: list = ReadRom(startAddr, RomInfoSize)
 
+    val_dict = {}
+    size = 0
+    isLoRom = False
+    out = header_info.copy()
+    for i in range(4):
+        val = out.pop()
+        val_dict[str(ROM_INFO_SIZE - i - 1)] = int(val)
+
+    if val_dict["23"] == 0x0A:
+        size = 0x100000  # 1MB
+    elif val_dict["23"] == 0x0C:
+        size = 0x400000  # 4MB
+    else:
+        size = 0
+
+    if (val_dict["21"] & 0x01) == 0:
+        isLoRom = True
+        
     if game_info_f:
         print("-------------------------")
         print("Game Info (Title, etc...)")
         print("-------------------------")
-    # dbg_print(out)
-    # for data in out:
-    #     dbg_print(f" {format(data, 'x')}", end="")
-    # dbg_print("")
-    val_dict = {}
-    size = 0
-    isLoRom = False
-    for i in range(4):
-        val = out.pop()
-        # dbg_print(f"type val={type(val)}")
-        val_dict[str(ROM_INFO_SIZE - i - 1)] = int(val)
-        dbg_print(f"{ROM_INFO_SIZE-i-1}: {hex(val)}")
-    if val_dict["23"] == 0x0A:
-        dbg_print("size: 1MB")
-        size = 0x100000  # 1MB
-    elif val_dict["23"] == 0x0C:
-        dbg_print("size: 4MB")
-        size = 0x400000  # 4MB
-    else:
-        dbg_print("size: unknown")
-        size = 0
-
-    if (val_dict["21"] & 0x01) == 0:
-        dbg_print("LoROM")
-        isLoRom = True
-    else:
-        dbg_print("HiROM")
-
-    if game_info_f:
+        print("Title: ", end="")
         for data in out:
             print(chr(data), end="")
-        print("\n-------------------------")
+        print("")
+        
+        print("Size: ", end="")
+        if size==0:
+            print("unknown")
+        else:
+            print(f"{size >> 20 }MB")
+            
+        romtype = "LoROM" if isLoRom  else "HiROM"
+        dbg.dbg_print(f"ROM type: {romtype}")
+    
+        dbg.dbg_print("Detail: ")
+        
+        for key,value in sorted(val_dict.items()):
+            fomated = format(value, "#04x")
+            dbg.dbg_print(f"  {key}: {fomated}")
+        dbg.dbg_print(f"Header info: {header_info}")
+        print("-------------------------")
         ClearAddr()
         TermPort()
         return
 
     ClearAddr()
-    dbg_print("")
-    dbg_print("OK Bokujo")
+    dbg.dbg_print("")
+    dbg.dbg_print("OK Bokujo")
 
     start_address: int = 0x0000
     if isLoRom:
         start_address = conver_address(start_address)
 
-    dbg_print(f"start_address = {hex(start_address)}")
+    dbg.dbg_print(f"start_address = {hex(start_address)}")
     SetAddress(start_address)
     time.sleep(INTV)
     bin = bytearray([])
@@ -274,4 +283,6 @@ def MainLoop():
 try:
     MainLoop()
 except Exception as ex:
+    ClearAddr()
+    TermPort()
     print(f"error: {ex}")
