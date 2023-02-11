@@ -11,10 +11,13 @@ port_tbl_data_ctrl = [20, 21, 22, 23, 4, 5, 6, 7]
 # CPU R/W	# /ROMSEL	# M2	# PPU /RD
 port_tbl_port_ctrl = [9, 10, 11, 19]
 
+# ROM Info 25 byte
+ROM_INFO_SIZE = 25
+
 class Debug:
-    def __init__(self,fdebug:bool):
-        self.f_debug_log:bool = fdebug
-        
+    def __init__(self, fdebug: bool):
+        self.f_debug_log: bool = fdebug
+
     def dbg_print(self, log_msg):
         if self.f_debug_log:
             print(log_msg)
@@ -136,26 +139,6 @@ def ReadRom(addr, chrsize) -> list:
     return output
 
 
-# def ReadLoRom(addr,chrsize)
-# 	ClearAddr()
-# 	gpio_sleep(50)
-# 	SetAddress(addr)
-# 	upper = 0
-# 	for i=1,chrsize*2 do
-# 	    if (i-1)>upper * 2 * 0x8000 then
-# 		    if 0==((i-1) % 0x8000) then
-# 				upper = upper + 1
-# 		    end
-# 	    end
-# 		address = upper * 2 * 0x8000 + ((i-1) % 0x8000) + 0x8000
-# 	    if (i-1)+0x8000==address then
-# 			val = gpio_get_value(port_tbl_data_ctrl[1], 0, 0xff)
-# 			dumper_write(val)
-# 		end
-# 		IncAddress()
-# 		i=i+1
-# 	end
-# end
 def conver_address(in_addr: int) -> int:
     address = in_addr
     upper = int(address / 0x8000)
@@ -169,8 +152,47 @@ def conver_address(in_addr: int) -> int:
 
     return address
 
+def get_d_info(header_info:dict)->dict:
+    val_dict = {}
+    out = header_info.copy()
+    for i in range(4):
+        val = out.pop()
+        val_dict[str(ROM_INFO_SIZE - i - 1)] = int(val)
+    return val_dict,out
 
-ROM_INFO_SIZE = 25
+def print_game_info(dbg:Debug, header_info:dict, size:int, isLoRom:bool):
+
+    val_dict,out = get_d_info(header_info)
+
+    print("-------------------------")
+    print("Game Info (Title, etc...)")
+    print("-------------------------")
+    print("Title: ", end="")
+    for data in out:
+        print(chr(data), end="")
+    print("")
+
+    print("Size: ", end="")
+    if size == 0:
+        print("unknown")
+    else:
+        print(f"{size >> 20 }MB")
+
+    romtype = "LoROM" if isLoRom else "HiROM"
+    dbg.dbg_print(f"ROM type: {romtype}")
+
+    dbg.dbg_print("Detail: ")
+
+    for key, value in sorted(val_dict.items()):
+        fomated = format(value, "#04x")
+        dbg.dbg_print(f"  {key}: {fomated}")
+    dbg.dbg_print(f"Header info: {(header_info)}")
+    print("-------------------------")
+    ClearAddr()
+    TermPort()
+    dbg.dbg_print("")
+    dbg.dbg_print("OK Bokujo \(^o^)/")
+
 # OE  - CpuRw
 # CS  - RomSel
 # WE  - M2_PpuWr
@@ -181,14 +203,10 @@ def MainLoop():
     game_info_f = opt["gameinfo"]
     f_debug_log = opt["debug"]
     dbg = Debug(f_debug_log)
-    
+
     InitPort()
     startAddr = 0xFFC0  # ROM Info Addr
     RomInfoSize = ROM_INFO_SIZE
-    # ROM Info 25 byte
-    # size = RomInfoSize + 1024
-    # size = 1024 * 1024 * (24>>3)
-    # size = 1
 
     # Read Rom Info
     # OE + CS + !WE + !RST
@@ -215,36 +233,9 @@ def MainLoop():
 
     if (val_dict["21"] & 0x01) == 0:
         isLoRom = True
-        
+
     if game_info_f:
-        print("-------------------------")
-        print("Game Info (Title, etc...)")
-        print("-------------------------")
-        print("Title: ", end="")
-        for data in out:
-            print(chr(data), end="")
-        print("")
-        
-        print("Size: ", end="")
-        if size==0:
-            print("unknown")
-        else:
-            print(f"{size >> 20 }MB")
-            
-        romtype = "LoROM" if isLoRom  else "HiROM"
-        dbg.dbg_print(f"ROM type: {romtype}")
-    
-        dbg.dbg_print("Detail: ")
-        
-        for key,value in sorted(val_dict.items()):
-            fomated = format(value, "#04x")
-            dbg.dbg_print(f"  {key}: {fomated}")
-        dbg.dbg_print(f"Header info: {header_info}")
-        print("-------------------------")
-        ClearAddr()
-        TermPort()
-        dbg.dbg_print("")
-        dbg.dbg_print("OK Bokujo \(^o^)/")
+        print_game_info(dbg, header_info, size, isLoRom)
         return
 
     ClearAddr()
