@@ -1,6 +1,7 @@
 import sys
 import RPi.GPIO as GPIO
 import time
+from options import get_option
 
 INTV = 0.005
 # CLK	#RESET
@@ -10,7 +11,12 @@ port_tbl_data_ctrl = [20, 21, 22, 23, 4, 5, 6, 7]
 # CPU R/W	# /ROMSEL	# M2	# PPU /RD
 port_tbl_port_ctrl = [9, 10, 11, 19]
 
-args = sys.argv
+debug_log = False
+
+
+def dbg_print(log_msg):
+    if debug_log:
+        print(log_msg)
 
 
 def InitPort():
@@ -49,7 +55,7 @@ def GpioGetData():
     return ret
 
 
-# 	print(ret)
+# 	dbg_print(ret)
 # 	return ord(hex(ret))
 
 
@@ -120,12 +126,12 @@ def ReadRom(addr, chrsize) -> list:
     time.sleep(INTV)
     output = []
     for i in range(chrsize):
-        # print(chr(GpioGetData()), end='')
+        # dbg_print(chr(GpioGetData()), end='')
         time.sleep(INTV)
         # GpioGetData()
         output.append(GpioGetData())
         IncAddress()
-    print("")
+    dbg_print("")
     return output
 
 
@@ -169,14 +175,9 @@ ROM_INFO_SIZE = 25
 # WE  - M2_PpuWr
 # RST - PpuRd
 def MainLoop():
-    if len(args) < 2:
-        print("error")
-        return
-
-    path_w = args[1]
-    game_info_f = False
-    if (len(args)) >= 3:
-        game_info_f = True  # args[2]
+    opt = get_option()
+    path_w = opt["filename"]
+    game_info_f = opt["gameinfo"]
 
     InitPort()
     startAddr = 0xFFC0  # ROM Info Addr
@@ -195,55 +196,55 @@ def MainLoop():
     # out = ReadRom(startAddr, RomInfoSize)
     out: list = ReadRom(startAddr, RomInfoSize)
 
-    print("-------------------------")
-    print("Game Info (Title, etc...)")
-    print("-------------------------")
-    # print(out)
+    if game_info_f:
+        print("-------------------------")
+        print("Game Info (Title, etc...)")
+        print("-------------------------")
+    # dbg_print(out)
     # for data in out:
-    #     print(f" {format(data, 'x')}", end="")
-    # print("")
+    #     dbg_print(f" {format(data, 'x')}", end="")
+    # dbg_print("")
     val_dict = {}
     size = 0
     isLoRom = False
     for i in range(4):
         val = out.pop()
-        # print(f"type val={type(val)}")
+        # dbg_print(f"type val={type(val)}")
         val_dict[str(ROM_INFO_SIZE - i - 1)] = int(val)
-        print(f"{ROM_INFO_SIZE-i-1}: {hex(val)}")
+        dbg_print(f"{ROM_INFO_SIZE-i-1}: {hex(val)}")
     if val_dict["23"] == 0x0A:
-        print("size: 1MB")
+        dbg_print("size: 1MB")
         size = 0x100000  # 1MB
     elif val_dict["23"] == 0x0C:
-        print("size: 4MB")
+        dbg_print("size: 4MB")
         size = 0x400000  # 4MB
     else:
-        print("size: unknown")
+        dbg_print("size: unknown")
         size = 0
 
     if (val_dict["21"] & 0x01) == 0:
-        print("LoROM")
+        dbg_print("LoROM")
         isLoRom = True
     else:
-        print("HiROM")
-
-    for data in out:
-        print(chr(data), end="")
-    print("\n-------------------------")
+        dbg_print("HiROM")
 
     if game_info_f:
+        for data in out:
+            print(chr(data), end="")
+        print("\n-------------------------")
         ClearAddr()
         TermPort()
         return
 
     ClearAddr()
-    print("")
-    print("OK Bokujo")
+    dbg_print("")
+    dbg_print("OK Bokujo")
 
     start_address: int = 0x0000
     if isLoRom:
         start_address = conver_address(start_address)
 
-    print(f"start_address = {hex(start_address)}")
+    dbg_print(f"start_address = {hex(start_address)}")
     SetAddress(start_address)
     time.sleep(INTV)
     bin = bytearray([])
@@ -256,7 +257,7 @@ def MainLoop():
                 sys.stdout.write("#")
                 sys.stdout.flush()
                 time.sleep(0.001)
-            
+
             if isLoRom:
                 conver_address(i)
 
@@ -270,4 +271,7 @@ def MainLoop():
     print("Complete!")
 
 
-MainLoop()
+try:
+    MainLoop()
+except Exception as ex:
+    print(f"error: {ex}")
