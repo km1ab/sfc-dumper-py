@@ -167,12 +167,12 @@ def print_game_info(dbg:Debug, header_info:dict, size:int, isLoRom:bool):
     print("-------------------------")
     print("Game Info (Title, etc...)")
     print("-------------------------")
-    print("Title: ", end="")
+    print("Title:    ", end="")
     for data in out:
         print(chr(data), end="")
     print("")
 
-    print("Size: ", end="")
+    print("Size:     ", end="")
     if size == 0:
         print("unknown")
     else:
