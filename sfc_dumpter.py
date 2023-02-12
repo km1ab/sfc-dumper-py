@@ -232,6 +232,14 @@ def print_game_info(dbg: Debug, header_info: list, size: int, isLoRom: bool):
     dbg.dbg_print("OK Bokujo \(^o^)/")
 
 
+def calc_check_sum(bin):
+    sum = 0
+    for value in bin:
+        sum = sum + value
+    print("\nCheck Sum: ", end="")
+    print(format(sum % 0x10000, "04x").upper())
+
+
 # OE  - CpuRw
 # CS  - RomSel
 # WE  - M2_PpuWr
@@ -293,6 +301,7 @@ def MainLoop():
 
             bin.append(GpioGetData())
             IncAddress()
+        calc_check_sum(bin)
         f.write(bin)
 
     ClearAddr()
