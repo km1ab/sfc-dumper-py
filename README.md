@@ -11,7 +11,7 @@ After setting Raspberry pi (raspbian install),
 at Raspberry pi, or remote connecting (ex ssh,...)
 ```sh
 $ pip install RPi.GPIO
-$ python3 sfc-dumper.py filename
+$ python3 sfc_dumper.py -o filename
 ```
 
 ## Hardware
