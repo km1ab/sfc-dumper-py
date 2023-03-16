@@ -211,8 +211,11 @@ def print_game_info(dbg: Debug, header_info: list, size: int, isLoRom: bool):
     print("-------------------------")
     print(f"Title:    {title}")
 
-    romsize = "unknown" if size == 0 else f"{size >> 20 }MB"
-    print(f"Size:     {romsize}")
+    romsize_s = "unknown"
+    if (size >> 10) != 0:
+        romsize = 0 if size == 0 else size >> 20
+        romsize_s = f"{romsize}MB" if romsize != 0 else f"{size >> 10 }KB"
+    print(f"Size:     {romsize_s}")
 
     romtype = "LoROM" if isLoRom else "HiROM"
     dbg.dbg_print(f"Type:     {romtype}")
