@@ -6,6 +6,11 @@
 - Raspberry pi 3 b+, or later (Recommend)
 - Raspberry pi zero, or later
 
+```
+Unsupported on Raspberry pi 5. "RPi.GPIO" is no longer available from Raspberry pi 5. 
+We are currently looking into alternatives.
+```
+
 ## How to use
 After setting Raspberry pi (raspbian install),
 at Raspberry pi, or remote connecting (ex ssh,...)
